@@ -1,0 +1,14 @@
+# Database lokal untuk minggu 11 dan seterusnya.
+# Jalankan: docker compose up -d   (membaca nilai dari file .env)
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: asetpinjam
+      POSTGRES_USER: ${DB_USER:-asetpinjam}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?isi DB_PASSWORD di file .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./sql/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro

@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tes:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: asetpinjam
+          POSTGRES_USER: asetpinjam
+          POSTGRES_PASSWORD: ci-sementara
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U asetpinjam"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/asetpinjam
+      DB_USER: asetpinjam
+      DB_PASSWORD: ci-sementara
+      PGPASSWORD: ci-sementara
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Siapkan skema database
+        run: |
+          psql -h localhost -U asetpinjam -d asetpinjam -f sql/schema.sql
+          psql -h localhost -U asetpinjam -d asetpinjam -f sql/seed.sql
+      - name: Jalankan tes sampai minggu aktif
+        run: bash scripts/uji.sh
+      - name: Unggah laporan tes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laporan-tes
+          path: "**/target/surefire-reports/*.txt"
+          if-no-files-found: ignore
